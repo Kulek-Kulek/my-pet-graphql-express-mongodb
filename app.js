@@ -29,10 +29,22 @@ app.use(
     schema: graphqlSchema,
     rootValue: graphqlResolver,
     graphiql: true,
+    customFormatErrorFn(err) {
+      if (!err.originalError) return err;
+
+      const data = err.originalError.data;
+      const message = err.message || "Something went wrong!";
+      const code = err.originalError.code || 500;
+      return {
+        message,
+        status: code,
+        data,
+      };
+    },
   })
 );
 
-app.use((error, _, res, _1) => {
+app.use((err, _, res, _1) => {
   res.status(500).json({ message: err.message || "Something went wrong." });
 });
 
