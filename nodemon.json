@@ -1,0 +1,6 @@
+{
+  "env": {
+    "DB_USER": "Kris",
+    "DB_PASSWORD": "superSecretMongodbPassword"
+  }
+}
