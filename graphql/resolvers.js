@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
 
 const User = require("../models/user");
 const PetType = require("../models/pet-type");
@@ -9,10 +10,55 @@ const Pet = require("../models/pet");
 const HttpError = require("../models/error");
 
 module.exports = {
-  hello() {
+  login: async ({ email, password }) => {
+    const errors = [];
+    if (!validator.isEmail(email)) {
+      errors.push({ message: "Invalid email!" });
+    }
+    if (
+      validator.isEmpty(password) ||
+      !validator.isLength(password, { min: 4 })
+    ) {
+      errors.push({ message: "Invalid password!" });
+    }
+    if (errors.length > 0) {
+      const error = new Error("Invalid input!");
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+
+    let user;
+    try {
+      user = await User.findOne({ email: email });
+    } catch (err) {
+      const error = new HttpError("User not found", 500);
+      throw error;
+    }
+
+    if (!user) {
+      const error = new HttpError("User not found!", 401);
+      throw error;
+    }
+
+    const passwordIsEqual = await bcrypt.compare(password, user.password);
+    if (!passwordIsEqual) {
+      const error = new HttpError("Invalid paswword.", 401);
+      throw error;
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        email: user.email,
+      },
+      process.env.JWT_KEY,
+      { expiresIn: "1h" }
+    );
+
     return {
-      text: "hello there",
-      views: 123456789,
+      token,
+      userId: user._id.toString(),
     };
   },
 
@@ -28,6 +74,12 @@ module.exports = {
       !validator.isLength(password, { min: 4 })
     ) {
       errors.push({ message: "Password too short!" });
+    }
+    if (
+      !validator.isLength(lastName, { min: 3 }) &&
+      !validator.isLength(firstName, { min: 3 })
+    ) {
+      errors.push({ message: "First name or last name is too short!" });
     }
     if (errors.length > 0) {
       const error = new Error("Invalid input!");

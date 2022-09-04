@@ -64,9 +64,9 @@ module.exports = buildSchema(`
         health: Int!
     }
 
-    type TestData {
-        text: String!
-        views: Int!
+    type AuthData {
+        token: String!
+        userId: String!
     }
 
     type RootMutation {
@@ -77,7 +77,7 @@ module.exports = buildSchema(`
     }
 
     type RootQuery {
-        hello: TestData
+        login(email:String!, password: String!): AuthData!
     }
 
     schema {

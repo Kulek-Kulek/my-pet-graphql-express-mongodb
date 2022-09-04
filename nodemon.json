@@ -1,6 +1,7 @@
 {
   "env": {
     "DB_USER": "Kris",
-    "DB_PASSWORD": "superSecretMongodbPassword"
+    "DB_PASSWORD": "superSecretMongodbPassword",
+    "JWT_KEY": "superSecretJWTKey"
   }
 }
