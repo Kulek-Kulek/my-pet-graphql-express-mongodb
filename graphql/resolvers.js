@@ -267,8 +267,14 @@ module.exports = {
     return { ...createdNewPetProp._doc, id: createdNewPetProp._id.toString() };
   },
 
-  addPetToUser: async (args, _, next) => {
-    const { petName, petTypeId, userId } = args.addedPetDataInput;
+  addPetToUser: async (args, req, next) => {
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated!");
+      error.code = 401;
+      throw error;
+    }
+
+    const { petName, petTypeId } = args.addedPetDataInput;
 
     const errors = [];
     if (
@@ -277,8 +283,8 @@ module.exports = {
     ) {
       errors.push({ message: "Pet name must be at least 3 letters long!" });
     }
-    if (!validator.isNumeric(petTypeId) || !validator.isNumeric(userId)) {
-      errors.push({ message: "Both pet type and user type must be numbers!" });
+    if (validator.isEmpty(petTypeId)) {
+      errors.push({ message: "Invalid pet type id!" });
     }
     if (errors.length > 0) {
       const error = new Error("Invalid input!");
@@ -302,7 +308,7 @@ module.exports = {
 
     let user;
     try {
-      user = await User.findById(userId);
+      user = await User.findById(req.userId);
     } catch (err) {
       const error = new HttpError("I could not find this user.", 500);
       throw error;
@@ -329,11 +335,47 @@ module.exports = {
       pet.user.push(user);
       await sess.commitTransaction();
     } catch (err) {
-      console.log(err);
       const error = new HttpError("I could not save a new pet.", 500);
       throw error;
     }
 
     return { ...pet._doc, id: pet._id.toString() };
+  },
+
+  user: async (_, req, next) => {
+    if (!req.isAuth) {
+      const error = new Error("Not authenticated!");
+      error.code = 401;
+      throw error;
+    }
+    // let totalPets;
+    // try {
+    //   totalPets = await Pet.find().countDocuments();
+    // } catch (err) {
+    //   const error = new HttpError(
+    //     "I could not retrieve total number of pets.",
+    //     500
+    //   );
+    //   throw error;
+    // }
+
+    let user;
+    try {
+      user = await User.findById(req.userId).populate("pets");
+    } catch (err) {
+      const error = new HttpError("I could not find the user.", 500);
+      throw error;
+    }
+
+    if (!user) {
+      const error = new HttpError("User not found!", 422);
+      throw error;
+    }
+
+    const pets = user._doc.pets.map((pet) => {
+      return { ...pet._doc, id: pet._id.toString() };
+    });
+    console.log(pets);
+    return { ...user._doc, id: user._id.toString() };
   },
 };

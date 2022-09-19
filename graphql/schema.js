@@ -23,8 +23,7 @@ module.exports = buildSchema(`
 
     input addedPetInputData {
         petName: String!
-        petTypeId: ID!
-        userId: ID!
+        petTypeId: String!
     }
 
     type User {
@@ -44,7 +43,8 @@ module.exports = buildSchema(`
 
     type Pet {
         _id: ID!,
-        name: String!
+        petName: String!
+        petType: String!
         health: Int!
         user: User!
     }
@@ -69,6 +69,11 @@ module.exports = buildSchema(`
         userId: String!
     }
 
+    type GetPetData {
+        pets: [Pet!]!
+        totalPets: Int!
+    }
+
     type RootMutation {
         createUser(userInput: UserInputData): User!
         createPetType(petTypeInput: PetTypeInputData!): PetType!
@@ -78,6 +83,7 @@ module.exports = buildSchema(`
 
     type RootQuery {
         login(email:String!, password: String!): AuthData!
+        user: User!
     }
 
     schema {
